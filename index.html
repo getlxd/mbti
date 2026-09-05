@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>16Personalities · MBTI 性格测试</title>
+<style>
+:root{
+  --bg1:#0f172a; --bg2:#1e293b; --accent:#06b6d4; --accent2:#6366f1;
+  --card:rgba(255,255,255,.08); --line:rgba(255,255,255,.14);
+  --text:#f1f5f9; --muted:#94a3b8; --e:#f59e0b; --i:#6366f1; --s:#10b981;
+  --n:#8b5cf6; --t:#ef4444; --f:#ec4899; --j:#3b82f6; --p:#f97316;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  color:var(--text);min-height:100vh;overflow-x:hidden;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2));
+  background-attachment:fixed;line-height:1.7;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(circle at 15% 20%,rgba(99,102,241,.25),transparent 40%),
+    radial-gradient(circle at 85% 75%,rgba(6,182,212,.22),transparent 42%);
+  pointer-events:none;
+}
+.wrap{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:20px 16px 60px;}
+.brand{text-align:center;padding:14px 0 6px;}
+.brand .logo{
+  display:inline-block;font-weight:800;font-size:26px;letter-spacing:1px;
+  background:linear-gradient(90deg,#22d3ee,#818cf8);-webkit-background-clip:text;
+  background-clip:text;color:transparent;
+}
+.brand .ver{font-size:11px;color:var(--muted);letter-spacing:2px;margin-top:2px;}
+
+/* 卡片 */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:22px;margin-top:16px;backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);box-shadow:0 8px 32px rgba(0,0,0,.25);
+}
+h1{font-size:23px;text-align:center;margin-bottom:8px;}
+.sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:6px;}
+
+/* 维度介绍卡片 */
+.dim-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.dim{
+  border-radius:14px;padding:14px 12px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+}
+.dim .top{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;margin-bottom:6px;}
+.dot{width:12px;height:12px;border-radius:50%;flex:none;}
+.dim p{font-size:11px;color:var(--muted);line-height:1.55;}
+.dim .pair{font-size:10px;opacity:.8;margin-top:6px;letter-spacing:.5px;}
+
+.section-title{font-size:16px;font-weight:800;margin:22px 2px 4px;display:flex;align-items:center;gap:8px;}
+.section-title span{font-size:11px;font-weight:600;color:var(--muted);background:rgba(255,255,255,.08);padding:2px 8px;border-radius:8px;}
+
+/* 测试入口卡 */
+.entry{display:flex;gap:12px;margin-top:14px;}
+.entry .opt{
+  flex:1;border-radius:18px;padding:18px 14px;border:1px solid var(--line);
+  background:rgba(255,255,255,.05);text-align:center;cursor:pointer;transition:.2s;position:relative;overflow:hidden;
+}
+.entry .opt.primary{border-color:rgba(6,182,212,.55);}
+.entry .opt.full{border-color:rgba(139,92,246,.5);}
+
+/* 精简首页 */
+.hero{text-align:center;padding:8px 0 4px;}
+.hero h1{font-size:22px;margin-bottom:8px;}
+.hero .sub{font-size:13px;max-width:380px;margin:0 auto;}
+.entry-wrap{margin-top:18px;}
+.entry-wrap .entry{flex-direction:column;gap:14px;}
+.entry-wrap .opt{display:flex;align-items:center;text-align:left;padding:18px 20px;gap:16px;}
+.entry-wrap .opt .ill{font-size:38px;margin:0 4px 0 0;flex:none;}
+.entry-wrap .opt .txt{flex:1;}
+.entry-wrap .opt .tt{font-size:16px;}
+.entry-wrap .opt .num{font-size:12px;margin-top:2px;}
+.entry-wrap .opt .time{font-size:11px;margin-top:2px;}
+.entry-wrap .opt .arrow{flex:none;font-size:22px;opacity:.6;transition:.2s;}
+.entry-wrap .opt:active .arrow{transform:translateX(4px);opacity:1;}
+.intro-note{font-size:12px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.6;}
+
+/* 折叠说明块 */
+.collapse{margin-top:16px;}
+.collapse summary{cursor:pointer;list-style:none;font-size:14px;font-weight:700;padding:12px 16px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+.collapse summary::-webkit-details-marker{display:none;}
+.collapse summary .ic{transition:.25s;font-size:12px;opacity:.6;}
+.collapse[open] summary .ic{transform:rotate(180deg);}
+.collapse .cbody{padding:6px 2px 2px;}
+
+/* 海报 */
+.poster{position:relative;border-radius:22px;padding:26px 22px 22px;color:#fff;overflow:hidden;
+  background:linear-gradient(160deg,#0f172a,#1e293b 55%,#0b3b4b);margin-bottom:18px;}
+.poster::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 85% 12%,rgba(99,102,241,.45),transparent 42%),radial-gradient(circle at 12% 88%,rgba(6,182,212,.35),transparent 42%);pointer-events:none;}
+.poster>*{position:relative;z-index:1;}
+.poster .plogo{font-weight:800;font-size:13px;letter-spacing:2px;opacity:.85;}
+.poster .pcode{font-size:44px;font-weight:900;letter-spacing:3px;margin:14px 0 2px;background:linear-gradient(90deg,#22d3ee,#818cf8);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.poster .pname{font-size:18px;font-weight:700;}
+.poster .prole{font-size:12px;opacity:.85;margin-top:4px;}
+.poster .pdim{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;}
+.poster .pdim span{font-size:11px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:10px;font-weight:600;}
+.poster .pbars{margin-top:16px;}
+.poster .pbar{display:flex;align-items:center;gap:8px;font-size:10px;margin-bottom:7px;}
+.poster .pbar .pl{width:52px;opacity:.9;}
+.poster .pbar .pr{width:52px;text-align:right;opacity:.9;}
+.poster .pbar .pt{flex:1;height:8px;background:rgba(255,255,255,.14);border-radius:8px;overflow:hidden;display:flex;}
+.poster .pbar .pt i{display:block;height:100%;}
+.poster .pfoot{margin-top:16px;font-size:10px;opacity:.75;text-align:center;border-top:1px solid rgba(255,255,255,.16);padding-top:10px;}
+.share-row{display:flex;gap:12px;margin-top:18px;}
+.share-row .btn{margin-top:0;}
+.entry .opt.disabled{opacity:.55;filter:grayscale(.6);}
+.entry .opt .ill{font-size:34px;margin-bottom:8px;}
+.entry .opt .tt{font-weight:800;font-size:14px;}
+.entry .opt .num{font-size:11px;color:var(--accent);margin-top:3px;}
+.entry .opt .time{font-size:10px;color:var(--muted);margin-top:2px;}
+.entry .opt .soon{position:absolute;top:10px;right:-22px;background:var(--accent2);font-size:9px;padding:2px 22px;transform:rotate(35deg);}
+.entry .opt:active{transform:scale(.97);}
+
+/* 结果分类 */
+.type-group{margin-top:12px;border-radius:14px;overflow:hidden;border:1px solid var(--line);}
+.type-group .gh{display:flex;align-items:center;gap:8px;padding:10px 14px;font-weight:700;font-size:13px;}
+.type-group .gh .tag{font-size:10px;background:rgba(255,255,255,.12);padding:2px 8px;border-radius:8px;}
+.type-group ul{list-style:none;padding:4px 14px 12px;font-size:12px;color:var(--muted);}
+.type-group li{padding:3px 0;padding-left:16px;position:relative;}
+.type-group li::before{content:"";position:absolute;left:2px;top:11px;width:5px;height:5px;border-radius:50%;background:var(--accent);}
+
+/* 按钮 */
+.btn{
+  display:block;width:100%;border:none;border-radius:14px;padding:15px;font-size:15px;
+  font-weight:700;color:#04121a;cursor:pointer;margin-top:16px;
+  background:linear-gradient(90deg,#22d3ee,#6366f1);letter-spacing:1px;transition:.2s;
+}
+.btn:active{transform:scale(.98);}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);}
+.agree{display:flex;align-items:flex-start;gap:8px;font-size:11px;color:var(--muted);margin-top:14px;line-height:1.5;}
+.agree input{margin-top:2px;accent-color:var(--accent);}
+.note{font-size:10px;color:var(--muted);text-align:center;margin-top:12px;opacity:.8;}
+
+/* 授权码弹层 */
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(4,12,28,.72);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:24px;}
+.overlay.show{display:flex;}
+.auth-box{background:#122033;border:1px solid var(--line);border-radius:22px;padding:26px 22px;width:100%;max-width:360px;}
+.auth-box h3{text-align:center;margin-bottom:6px;}
+.auth-box p{text-align:center;color:var(--muted);font-size:12px;margin-bottom:16px;}
+.auth-box input{
+  width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);
+  background:rgba(255,255,255,.06);color:var(--text);font-size:15px;text-align:center;letter-spacing:2px;outline:none;
+}
+.auth-box .err{color:#f87171;font-size:12px;text-align:center;margin-top:10px;min-height:18px;}
+
+/* 答题页 */
+.quiz-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.quiz-head .back{background:rgba(255,255,255,.08);border:none;color:var(--text);width:34px;height:34px;border-radius:10px;font-size:16px;cursor:pointer;}
+.progress{height:7px;background:rgba(255,255,255,.1);border-radius:8px;overflow:hidden;margin:10px 0 4px;}
+.progress .bar{height:100%;width:0;background:linear-gradient(90deg,#22d3ee,#818cf8);transition:width .3s;}
+.qmeta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:14px;}
+.qtext{font-size:17px;font-weight:700;line-height:1.6;margin:8px 0 20px;}
+.opt-btn{
+  display:block;width:100%;text-align:left;padding:16px 18px;border-radius:14px;
+  border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);
+  font-size:14px;margin-bottom:12px;cursor:pointer;transition:.18s;
+}
+.opt-btn .key{display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:7px;background:rgba(255,255,255,.1);font-size:12px;margin-right:10px;font-weight:700;}
+.opt-btn.sel{border-color:var(--accent);background:rgba(6,182,212,.16);transform:translateX(3px);}
+.nav{display:flex;gap:10px;margin-top:8px;}
+.nav .btn{margin-top:0;}
+
+/* 结果页 */
+.result-type{text-align:center;margin:4px 0 6px;}
+.result-type .code{font-size:38px;font-weight:900;letter-spacing:2px;
+  background:linear-gradient(90deg,#22d3ee,#818cf8);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.result-type .name{font-size:16px;font-weight:700;margin-top:2px;}
+.result-type .role{font-size:12px;color:var(--muted);margin-top:2px;}
+.bars{margin:18px 0;}
+.bars .row{margin-bottom:14px;}
+.bars .lab{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+.bars .track{display:flex;height:14px;border-radius:9px;overflow:hidden;background:rgba(255,255,255,.08);}
+.bars .seg{flex:1;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#04121a;transition:flex .5s;}
+.seg.a{background:var(--accent);}
+.seg.b{background:rgba(255,255,255,.16);color:var(--muted);}
+.info-block{margin-top:14px;}
+.info-block h4{font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.info-block p,.info-block ul{font-size:13px;color:#cbd5e1;}
+.info-block ul{list-style:none;padding-left:0;}
+.info-block li{padding:4px 0 4px 18px;position:relative;}
+.info-block li::before{content:"▸";position:absolute;left:0;color:var(--accent);}
+.chip-wrap{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{font-size:12px;background:rgba(99,102,241,.2);border:1px solid rgba(129,140,248,.4);padding:5px 12px;border-radius:20px;}
+.share-row{display:flex;gap:10px;margin-top:18px;}
+.share-row .btn{margin-top:0;}
+.share-row .ghost{flex:1;}
+.share-row .primary{flex:2;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid2 .info-block{margin-top:0;}
+.grow{background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(6,182,212,.1));border:1px solid rgba(129,140,248,.3);border-radius:16px;padding:16px;}
+.bars-title{font-size:13px;font-weight:700;margin:8px 2px 4px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.info-block ul{margin-top:2px;}
+.foot{text-align:center;color:var(--muted);font-size:10px;margin-top:18px;line-height:1.6;}
+
+.hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<!-- 授权码弹层 -->
+<div class="overlay" id="authOverlay">
+  <div class="card auth-box">
+    <h3>🔒 输入授权码</h3>
+    <p id="authDesc">请输入授权码以进入测试</p>
+    <input id="authInput" type="password" placeholder="授权码" autocomplete="off">
+    <button class="btn" onclick="submitAuth()">确 认</button>
+    <div class="err" id="authErr"></div>
+  </div>
+</div>
+
+<script>
+/* ============ 配置 ============
+   【授权码说明 · 用于销售】
+   - CODES 里每一条是一个可销售的授权码，每条带 quota（可使用次数，null = 不限次数）
+     和 allow（允许进入的版本：standard=标准版96 / full=完整版200 / all=两者皆可）
+   - 用户使用某码进入后，该码计数 +1；达到 quota 上限则失效
+   - 每个授权码只需输入一次：通过后会在本机 localStorage 记录"已授权"，后续直接进入
+     （清浏览器数据 / 换设备需重新输入）
+   - 想新增/下架码，只需增删 CODES 数组即可；建议正式上线后把 CODES 放到后端校验，
+     当前为纯前端演示，码明文可见，仅适合小规模分发 */
+const CODES = [
+  { code: "M8K3X9", quota: null, allow: "standard", label: "标准版 · 96题" }, // 销售码A
+  { code: "P2QR7L", quota: null, allow: "standard", label: "标准版 · 96题" }, // 销售码B
+  { code: "V5NJ4W", quota: null, allow: "full",      label: "完整版 · 200题" }, // 销售码C
+  { code: "T9HX6B", quota: null, allow: "all",       label: "全版本通用" },      // 销售码D（通用）
+];
+const STORAGE_KEY = "mbti_authed_v2";
+
+/* ============ 题目数据 ============
+   按文档答案口径：每题 {a, b}，A 恒为"外向/感觉/思考/判断"侧，B 为对立侧。
+   计分口径（严谨版）：每 8 题为一个完整轮次，依次对应
+     E/I、S/N、T/F、J/P 各 1 题（A=正向，B=对立），循环往复。
+   200 题 = 25 轮，故 E/I/S/N/T/F/J/P 每维度【恰好各 25 题】，计分完全均衡；
+   标准版取前 96 题 = 12 轮，每维度也恰好各 12 题。 */
+function dimOf(index){
+  const dims = [{a:"E",b:"I"},{a:"S",b:"N"},{a:"T",b:"F"},{a:"J",b:"P"}];
+  return dims[Math.floor((index % 8) / 2) % 4]; // 0,1->E/I ; 2,3->S/N ; 4,5->T/F ; 6,7->J/P
+}
+const QUESTIONS = Array.from({length:200}, (_, i)=> dimOf(i));
+const TOTAL = QUESTIONS.length; // 200
+
+/* 题干文本：从 user_doc 抽取每题 A/B 题干。格式为 [[A题干, B题干], ...] */
+const TEXTS = [["当你要外出一整天,你会？", "计划好要做什么和在什么时候做", "说去就去,无计划随性而行"], ["你认为自己是一个？", "较为健谈,能轻松开启并维持对话的人", "相对安静,更多时候倾听他人发言的人"], ["你在社交聚会中？", "与许多人交流,包括陌生人,且乐在其中", "只与少数认识的人交流,更享受小范围互动"], ["你通常更喜欢？", "成为众人关注的焦点,展现自我", "退居幕后,默默观察,不引人注目"], ["和一群人在一起,你通常？", "参与各种话题讨论,积极发表观点", "等待合适时机发言,或只是聆听"], ["你更愿意和谁交往？", "各种不同类型的人,喜欢社交圈子的多样性", "少数几个合得来、能深入交流的朋友"], ["你在做决策时,更倾向于？", "和他人讨论,参考多方意见后决定", "自己思考,在内心权衡利弊后决定"], ["你更喜欢以下哪种活动？", "参加热闹的派对或大型社交活动", "在家与亲密朋友聚会或独处"], ["你觉得自己在社交场合中？", "如鱼得水,能迅速融入并活跃气氛", "有些拘谨,需要时间适应和放松"], ["当你有空闲时间,你更可能？", "约朋友一起出去玩,参与各类活动", "独自度过,比如阅读、听音乐或做自己喜欢的事"], ["你在团队项目中？", "主动承担领导角色,组织协调大家工作", "更愿意在团队中扮演协助者角色,听从安排"], ["你更愿意和他人一起？", "参与团队竞技比赛,感受竞争氛围", "进行一对一的深度交流,分享内心想法"], ["在新环境中,你？", "很快就能结识新朋友,适应新环境", "需要一段时间来熟悉环境和人,建立联系较慢"], ["你更喜欢通过什么方式交流？", "面对面交流,能直接表达情感和想法", "文字交流,如邮件、信息,有更多时间思考表达内容"], ["当你和朋友在一起时,你通常？", "是那个发起话题,引导交流方向的人", "跟随话题,适时给予回应和补充"], ["你在人群中？", "容易被注意到,因为你善于表现自己", "不太引人注意,更倾向于低调行事"], ["你更喜欢？", "充满活力、热闹非凡的社交场景", "安静、平和,能让你专注思考的环境"], ["你在社交活动后？", "感到精力充沛,还想继续参与其他活动", "觉得有些疲惫,需要独处来恢复精力"], ["面对突发的社交邀请,你会？", "立刻答应,期待新的体验", "犹豫再三,更倾向于拒绝"], ["你在电话沟通时？", "能流畅表达,甚至比当面交流更放松", "觉得麻烦,更希望见面或文字沟通"], ["你在会议中？", "主动发言,提出观点和建议", "记录重点,除非被点名否则不轻易发言"], ["你更倾向于通过什么方式学习？", "小组讨论,在交流中碰撞出想法", "独自钻研,避免外界干扰"], ["当你情绪低落时,你会？", "找朋友倾诉,寻求安慰和建议", "独自消化情绪,不想被他人打扰"], ["你在旅行时更喜欢？", "结交当地朋友,深入体验风土人情", "独自探索,享受安静的旅行时光"], ["你在课堂上？", "积极提问和回答问题,参与互动", "默默听讲,通过笔记吸收知识"], ["你认为自己更偏向于？", "行动派,想到什么就立刻去做", "思考派,先在脑海中规划好再行动"], ["你在排队等待时会？", "与周围的人聊天,打发时间", "玩手机或观察周围,保持沉默"], ["你在团队合作中更关注？", "团队整体的进度和成果", "自己与队友的个人关系"], ["你在社交平台上的表现？", "频繁发布动态,与粉丝互动", "很少更新,主要浏览他人内容"], ["你在参加培训课程时？", "主动与其他学员交流,拓展人脉", "专注课程内容,较少主动社交"], ["你在面对陌生人时？", "自然大方,能快速找到共同话题", "有些紧张,需要时间才能打开话匣子"], ["你在聚会结束后会？", "继续组织后续活动,延长聚会时间", "尽快回家,享受独处的安静"], ["你在工作中更喜欢？", "开放式办公环境,方便与同事交流", "独立办公室,减少外界干扰"], ["你在做展示时？", "享受聚光灯下的感觉,充满自信", "感到压力,更希望通过文字报告呈现"], ["你在等待朋友时会？", "打电话或发消息询问进度", "安静等待,不喜欢催促他人"], ["你在社交中更看重？", "认识新朋友的数量", "与老朋友的深度交流"], ["你在小组作业中会？", "主动协调分工,推动项目进展", "负责分配给自己的任务,较少参与沟通"], ["你在参加婚礼等大型场合时？", "主动与不同桌的宾客交流", "只与熟悉的亲友坐在一起"], ["你在网络聊天时？", "使用大量表情和语气词,表达情绪", "简洁明了,更注重内容本身"], ["你在面对新同事时？", "主动打招呼,邀请对方一起吃饭", "等待对方先开口,保持礼貌距离"], ["你在休闲时更愿意？", "参加兴趣班,结识同好", "在家练习兴趣爱好,如画画、乐器"], ["你在团队讨论中？", "经常打断他人,急于表达自己的观点", "等他人说完再发言,确保思路清晰"], ["你在机场候机时会？", "与邻座乘客聊天,打发时间", "戴耳机听音乐或看书,避免交流"], ["你在社交媒体上的好友数量？", "很多,包括各种认识和不认识的人", "很少,只保留亲密朋友和家人"], ["你在参加讲座时？", "课后主动向讲师提问交流", "默默听完,有问题也留在心里"], ["你在团队建设活动中？", "积极参与游戏和互动环节", "配合活动,但更希望快点结束"], ["你在面对推销人员时？", "礼貌回应,甚至聊上几句", "直接拒绝,避免过多交流"], ["你在工作中遇到问题时？", "立刻询问同事或上级,寻求帮助", "先自己研究,实在解决不了再求助"], ["你在参加派对时会？", "主动跳舞或表演节目,活跃气氛", "坐在角落,观察他人的互动"], ["你在日常生活中更倾向于？", "外向、热情,充满活力", "内向、安静,喜欢独处"], ["当你在做一个决定时,你会？", "基于事实和已知信息,权衡利弊", "考虑各种可能性和潜在意义,发挥想象"], ["你更擅长？", "关注具体细节,按常规方法做事,确保准确无误", "发现事物间的关联,想出新方法,不拘泥于常规"], ["你更倾向于？", "实际的、现实的描述,注重事实依据", "富有想象力和创意的描述,强调概念和感觉"], ["在学习新知识时,你？", "更关注具体的案例、数据和实际操作方法", "更注重理论框架、原理和抽象概念"], ["当你回忆一件事情时,你更容易想起？", "事情发生的具体场景、人物动作和对话", "事情带给你的整体感受、印象和从中获得的启示"], ["你更相信？", "自己的直接经验和感官所获取的信息", "灵感、预感和内在的直觉判断"], ["你在解决问题时？", "从已有的经验和事实出发,寻找切实可行的解决方案", "尝试从全新的角度思考,提出富有创新性的解决方案"], ["你更喜欢？", "按部就班地完成任务,遵循既定步骤", "探索不同的方法和途径,寻找更优解"], ["在描述一个地方时,你会着重描述？", "这个地方的建筑风格、街道布局、具体的景观等实际特征", "这个地方给自己带来的抽象感觉、氛围和联想"], ["你对新事物的态度是？", "谨慎对待,先了解清楚实际情况再做判断", "充满好奇,乐于尝试,期待发现新的可能性"], ["你更倾向于记住？", "具体的人名、地名和日期等实际信息", "概念、理论和想法之间的联系"], ["在做决策时,你？", "更依赖过去的经验和已有的数据", "更愿意考虑未来的发展趋势和潜在影响"], ["你更喜欢阅读？", "纪实文学、传记等基于真实事件的书籍", "科幻小说、奇幻文学等充满想象的作品"], ["当你看到一个新产品时,你首先关注？", "产品的功能、使用方法和实际效果", "产品所蕴含的创新理念和潜在应用场景"], ["你在工作中？", "注重细节,确保工作的准确性和高质量完成", "更关注整体目标和方向,善于把握宏观局势"], ["你更愿意参与？", "有明确规则和流程的活动,感觉更踏实", "充满变化和挑战,能激发创造力的活动"], ["在与人交流时,你？", "更关注对方话语中的具体内容和事实依据", "更留意对方话语背后的含义和情感倾向"], ["你对生活的态度是？", "注重实际,脚踏实地,按部就班地生活", "充满憧憬,追求新奇,期待生活中的惊喜和变化"], ["你在学习语言时更擅长？", "记忆单词、语法规则等具体知识", "理解语言的韵律和文化内涵"], ["你在解决数学问题时？", "严格按照公式和步骤计算", "寻找规律和模式,用直觉推导答案"], ["你在观察一幅画时会？", "注意画中的细节,如色彩搭配、线条走向", "感受画面传达的情绪和意境"], ["你在制定计划时更依赖？", "过去的经验和实际数据", "对未来的想象和可能性"], ["你在购物时更关注？", "产品的材质、参数、性价比", "产品的设计感、品牌故事"], ["你在处理数据时？", "仔细核对每个数据的准确性", "寻找数据之间的关联和趋势"], ["你在旅行时更注重？", "打卡著名景点,体验当地特色美食", "感受当地文化氛围,与当地人交流"], ["你在听讲座时更关注？", "讲师提到的具体案例和数据", "讲座传递的核心观点和启发"], ["你在评价他人时更看重？", "对方的行为是否符合社会规范", "对方是否有独特的想法和创造力"], ["你在面对复杂问题时会？", "分解问题,逐步解决", "从整体出发,寻找关键突破点"], ["你在学习新技能时更倾向于？", "通过反复练习掌握具体操作", "理解原理后举一反三"], ["你在阅读新闻时更关注？", "事件的时间、地点、人物等细节", "事件背后的原因和影响"], ["你在玩游戏时更喜欢？", "遵循游戏规则,完成既定任务", "探索隐藏剧情和非常规玩法"], ["你在做报告时更注重？", "数据的准确性和逻辑的严密性", "观点的新颖性和创新性"], ["你在与他人合作时更关注？", "对方是否按时完成分配的任务", "对方是否能带来新的思路和想法"], ["你在面对陌生领域时会？", "先学习基础理论和操作流程", "直接尝试实践,在过程中摸索"], ["你在欣赏音乐时更在意？", "旋律、节奏等音乐本身的要素", "音乐传达的情感和故事"], ["你在做项目时更倾向于？", "严格按照项目计划执行", "根据实际情况灵活调整方案"], ["你在记忆知识时更擅长？", "机械记忆具体的知识点", "通过理解逻辑关系记忆"], ["你在面对选择时更依赖？", "现实中的利弊分析", "内心的直觉和预感"], ["你在解决人际冲突时会？", "分析具体事件的对错", "考虑双方的情感和关系"], ["你在规划未来时更看重？", "现实中的可行性和资源", "未来的可能性和发展空间"], ["你在学习历史时更关注？", "具体的历史事件和时间线", "历史事件背后的因果关系和影响"], ["你在购物时更易被什么吸引？", "打折促销、性价比高的商品", "设计独特、有创意的商品"], ["你在工作中更讨厌？", "重复性的机械劳动", "没有明确指导的模糊任务"], ["你在面对抽象概念时会？", "觉得难以理解,需要具体例子辅助", "觉得很有趣,喜欢深入思考"], ["你在做决策时更担心？", "忽略重要的细节", "错过潜在的可能性"], ["你在观察他人时更注意？", "对方的言行举止和具体行为", "对方的气质和整体印象"], ["你在解决技术问题时会？", "查阅官方文档和操作指南", "在论坛上寻找类似问题的解决方案"], ["你在面对新科技时？", "等待技术成熟后再尝试", "愿意成为早期使用者,体验新功能"], ["你在学习时更习惯？", "做详细的笔记,记录重点", "用思维导图梳理知识框架"], ["你在评价艺术作品时更看重？", "技巧的专业性和细节的完美", "作品传达的思想和情感共鸣"], ["当你不得不批评他人时,你会？", "客观地分析错误,直接指出问题所在", "考虑对方感受,委婉表达,避免伤害对方"], ["你在做决策时,更看重？", "公平、公正、符合逻辑,以事实为依据", "和谐、他人的感受和需求,注重人情"], ["面对冲突,你通常会？", "坚持原则,以理服人,分析冲突的根源", "寻求妥协,避免伤害感情,维护关系和谐"], ["你认为在工作中,更重要的是？", "遵循规章制度和工作流程,保证工作质量", "关注团队成员的需求和感受,营造良好氛围"], ["当你评价一个人时,你更倾向于？", "根据对方的行为和成就,进行客观评价", "考虑对方的动机和努力,从情感角度出发"], ["在做选择时,你？", "依靠理性分析,权衡利弊后做出决定", "听从内心感受,选择让自己感觉舒服的选项"], ["你更愿意和什么样的人合作？", "能力强、逻辑清晰,能高效完成工作的人", "友善、体贴,能与团队成员和谐相处的人"], ["当你面对一个艰难的决定时,你？", "冷静分析各种可能性,不受情绪左右", "会考虑这个决定对自己和他人的情感影响"], ["在团队中,你更注重？", "明确分工,各司其职,提高工作效率", "团队成员之间的关系,促进彼此的沟通和协作"], ["你在解决问题时？", "运用逻辑推理,找到问题的关键和解决方案", "从人的角度出发,考虑如何让各方都满意"], ["你更倾向于？", "对事不对人,在处理问题时保持客观", "会因为个人情感和关系,影响对事情的判断"], ["当你与他人意见不一致时,你？", "据理力争,试图说服对方接受自己的观点", "尊重对方意见,尝试寻找双方都能接受的方案"], ["你认为在生活中,更应该？", "理智地对待一切,不被情绪干扰", "跟随自己的内心感受,表达真实情感"], ["在评价一部电影时,你？", "从电影的制作水平、剧情逻辑等方面进行评价", "根据电影带给自己的情感触动和感受进行评价"], ["你在做决策时,会优先考虑？", "决策的可行性和合理性,以达成目标", "决策对他人的影响,尤其是情感上的影响"], ["你更喜欢和他人讨论？", "事实、数据和逻辑推理相关的话题", "情感、价值观和人际关系相关的话题"], ["在面对困难时,你？", "冷静思考,寻找解决问题的方法,不被情绪左右", "会因为困难对自己和他人的影响而感到焦虑"], ["你认为一个好的领导者应该？", "有清晰的思路和决策能力,带领团队达成目标", "关心团队成员,能激励和鼓舞大家共同努力"], ["你在处理工作失误时？", "分析失误原因,提出改进措施", "先安抚相关人员的情绪,再解决问题"], ["你在给予他人反馈时会？", "直接指出问题,提供具体建议", "先肯定优点,再委婉提出改进点"], ["你在团队会议中更关注？", "讨论内容的逻辑性和可行性", "团队成员的情绪和参与度"], ["你在面对他人的批评时会？", "冷静分析批评内容,有则改之", "感到受伤,需要时间消化情绪"], ["你在做选择时更易受什么影响？", "客观事实和数据", "他人的评价和感受"], ["你在处理人际关系时更看重？", "彼此的尊重和信任", "情感的共鸣和理解"], ["你在面对道德困境时会？", "依据道德准则做出判断", "考虑具体情境和各方利益"], ["你在工作中更倾向于？", "就事论事,不掺杂个人情感", "照顾同事感受,避免冲突"], ["你在评价自己时更关注？", "自己的能力和成就", "自己的情感和价值观"], ["你在面对他人的求助时会？", "评估自己的能力,理性决定是否帮助", "即使自己很忙,也不忍心拒绝"], ["你在团队合作中更愿意扮演？", "决策者,负责制定方案", "协调者,负责团队沟通"], ["你在处理问题时更依赖？", "逻辑推理", "同理心"], ["你在面对竞争时会？", "全力以赴,争取胜利", "担心伤害他人,保持适度参与"], ["你在表达不同意见时会？", "直接指出对方的逻辑漏洞", "先肯定对方,再提出自己的看法"], ["你在工作中更重视？", "结果的准确性", "过程中的人际关系"], ["你在面对他人的赞美时会？", "理性接受,分析对方的真实意图", "感到开心,认为这是对自己的认可"], ["你在制定规则时更注重？", "规则的公平性和普适性", "规则对相关人员的影响"], ["你在处理家庭矛盾时会？", "冷静分析矛盾点,提出解决方案", "优先安抚家人情绪,避免争吵"], ["你在工作中收到负面评价时？", "专注于改进工作方法", "会怀疑自己是否适合这份工作"], ["你更倾向于用什么方式表达关心？", "提供实际的帮助和建议", "给予情感支持和陪伴"], ["你在面对他人的失误时？", "指出错误并说明正确做法", "选择包容,避免让对方感到尴尬"], ["你在团队决策中更关注？", "决策的逻辑是否严密", "团队成员是否达成共识"], ["你在评价政策时更看重？", "政策的合理性和执行效果", "政策对弱势群体的关怀"], ["你在处理情感问题时会？", "尽量保持理性,不被情绪左右", "跟随内心感受,听从直觉判断"], ["你在与他人合作时更易？", "发现对方方案中的逻辑漏洞", "感受到对方的情绪变化"], ["你在面对他人的请求时会？", "先考虑是否符合自己的原则", "先考虑对方的需求和感受"], ["你在工作中更倾向于避免？", "不理性的决策", "伤害他人的感情"], ["你在评价一个项目时更关注？", "项目的投入产出比", "项目对团队凝聚力的影响"], ["你在处理冲突时更愿意？", "快速解决问题,不拖泥带水", "给双方时间冷静,再沟通解决"], ["你在面对他人的批评时更关注？", "批评内容的真实性", "批评者的语气和态度"], ["你在团队中更可能成为？", "坚持标准的\"规则执行者\"", "照顾他人的\"情感支持者\""], ["你在做决定时更害怕？", "因为情感因素导致决策失误", "因为理性分析忽略他人感受"], ["你通常？", "提前规划,按计划行事,井井有条", "灵活应变,随机安排,享受变化"], ["你在旅行前会？", "制定详细的旅行计划,包括行程、住宿、景点等", "只确定大致目的地,到了当地再决定具体行程"], ["在处理任务时,你更习惯？", "按照重要性和紧急程度,依次完成任务", "同时处理多个任务,根据当下情况灵活切换"], ["你做决策时更倾向于？", "尽快做出决定,然后执行,不喜欢拖延", "多收集信息,权衡利弊,直到最后一刻才做决定"], ["面对突发情况打乱原有安排时,你会？", "感到有些烦躁,努力想办法回到原来的计划轨道", "觉得没关系,顺势改变安排,享受新的变化"], ["你更喜欢？", "确定事情都安排妥当,有明确的时间表", "留有变化和调整的余地,不把计划定得太死"], ["当你开始一个项目时,你会？", "制定详细的计划,明确每个阶段的任务和时间节点", "先有个大致想法,在实施过程中根据实际情况调整"], ["你在生活中更倾向于？", "喜欢有规律的生活节奏,日常活动较为固定", "适应不同的生活节奏,乐于尝试新的生活方式"], ["你在整理物品时会？", "会按照一定规则分类整理,保持整洁有序", "大致整理,方便取用即可,不太在意细节"], ["你对未来的规划是？", "有明确的阶段性规划和目标", "没有固定规划,顺其自然发展"], ["你在安排日常事务时？", "提前规划好每一个时间段", "灵活安排,根据实际情况调整"], ["面对多个可选方案,你会？", "快速做出选择", "反复比较,慎重决定"], ["你在执行任务时更关注？", "任务完成的质量", "任务完成的速度"], ["当你参加活动时,你希望活动？", "有清晰的流程安排", "形式自由,充满变化"], ["你在购物时通常是？", "带着清单,目标明确", "随意浏览,即兴购买"], ["你在面对截止日期时会？", "提前完成任务", "在截止日期前冲刺完成"], ["你在处理文件时会？", "立即分类归档,保持桌面整洁", "堆放在一起,需要时再查找"], ["你在制定学习计划时？", "严格按照计划执行,不轻易改变", "根据学习进度和状态灵活调整计划"], ["你在面对多项任务时会？", "列出任务清单,按优先级完成", "凭感觉选择当前想做的任务"], ["你在旅行时更愿意？", "提前预订好所有住宿和交通", "走到哪住到哪,体验未知的惊喜"], ["你在工作中更喜欢？", "有明确的工作目标和流程", "自由发挥,自主决定工作方式"], ["你在做项目时更倾向于？", "定期检查项目进度,确保按计划进行", "灵活应对变化,调整项目方向"], ["你在日常生活中更讨厌？", "计划被打乱", "生活过于一成不变"], ["你在管理时间时更依赖？", "时间管理工具,如日程表、待办清单", "自己的直觉和当下的状态"], ["你在面对选择时会？", "一旦决定就很少改变", "经常犹豫,容易改变主意"], ["你在整理电脑文件时？", "建立多层文件夹分类管理", "随意存放,通过搜索功能查找"], ["你在参加会议时更希望？", "会议有明确的议程和结论", "会议形式开放,鼓励自由讨论"], ["你在制定预算时会？", "详细规划每一笔开支", "大致估算,灵活调整"], ["你在面对新的工作环境时？", "希望尽快了解规则和流程", "更愿意在实践中探索和适应"], ["你在处理邮件时会？", "立即回复重要邮件,保持收件箱整洁", "积累一段时间后集中处理"], ["你在规划假期时更愿意？", "详细规划假期行程", "随性安排,走到哪算哪"], ["你在学习新技能时会？", "制定学习计划,按步骤练习", "随意尝试,在实践中学习"], ["你在面对复杂任务时会？", "分解任务,制定详细的执行步骤", "先开始做,再根据进展调整方法"], ["你在管理团队时更倾向于？", "制定明确的规章制度和工作流程", "给予团队成员更多自主权和灵活性"], ["你在购物时更讨厌？", "没有明确的购物目标", "被导购员催促做决定"], ["你在处理家庭事务时会？", "提前安排好家庭活动和分工", "随家庭氛围自然发展,不刻意规划"], ["你在面对多个邀约时会？", "选择最符合自己计划的邀约", "根据当下的心情决定是否参加"], ["你在工作中更擅长？", "按照计划完成重复性任务", "应对突发的临时性任务"], ["你在整理衣柜时会？", "按季节、类型分类整理", "随手放置,方便拿取即可"], ["你在制定目标时会？", "设定具体可衡量的目标", "设定灵活的方向性目标"], ["你在参加培训时更希望？", "培训内容有清晰的结构和重点", "培训形式互动性强,允许自由提问"], ["你在处理财务时会？", "记录每一笔收支,定期复盘", "大致了解余额,不过分纠结细节"], ["你在面对决策时更担心？", "决策不够果断,影响进度", "决策过于死板,错过机会"], ["你在团队中更倾向于？", "推动团队按照计划执行", "接受团队成员的灵活调整"], ["你在旅行时更关注？", "行程的效率和完成度", "旅行中的体验和感受"], ["你在处理任务时更讨厌？", "被频繁打断", "被要求严格遵循流程"], ["你在制定计划时更依赖？", "过去的经验和数据", "当下的灵感和创意"], ["你在面对变化时会？", "尽量维持原有状态", "欣然接受并适应变化"], ["你在工作中更看重？", "计划的完整性和可执行性", "工作的灵活性和自主性"], ["你在日常生活中更倾向于？", "有规划、有条理的生活", "随性生活,享受当下"]];
+
+/* ============ 16型人格库 ============ */
+const TYPES = {
+  INTJ:{name:"建筑师",role:"富有想象力与战略思维，一切皆在计划之中",traits:["独立思考","战略眼光","追求卓越","理性果断"],career:["战略规划","科研研发","系统架构","金融分析"],advice:"学会在坚持标准的同时，给人际关系多一些耐心与弹性。"},
+  INTP:{name:"逻辑学家",role:"乐于创新的思想家，对知识充满无限好奇",traits:["逻辑严密","思维发散","热爱分析","不拘小节"],career:["软件开发","学术研究","数据分析","哲学/数学"],advice:"把想法落地执行，避免过度沉浸在理论的无限循环中。"},
+  ENTJ:{name:"统帅",role:"大胆而有魄力的领导者，总能找到通往成功的最佳路径",traits:["目标导向","高效果断","远见卓识","自信坚定"],career:["企业管理","创业","咨询顾问","项目管理"],advice:"多倾听团队情感需求，刚柔并济能让影响力更持久。"},
+  ENTP:{name:"辩论家",role:"聪明好奇的思想者，从不抗拒任何智力挑战",traits:["机智灵活","创意十足","善于辩论","热衷挑战"],career:["创意策划","市场营销","创业","法律/公关"],advice:"专注把一件事做到底，把发散的才华聚焦成成果。"},
+  INFJ:{name:"提倡者",role:"安静而神秘，同时鼓舞人心、不知疲倦的理想主义者",traits:["富有同理心","坚守价值观","洞察深刻","追求意义"],career:["心理咨询","教育","写作","公益/社会创新"],advice:"不必把所有人的情绪都扛在自己身上，学会设立边界。"},
+  INFP:{name:"调停者",role:"诗意、善良的利他主义者，总是热情地提供帮助",traits:["内心丰富","崇尚和平","忠诚热情","理想主义"],career:["文学创作","艺术设计","心理咨询","NGO工作"],advice:"在追随内心的同时，培养应对现实琐碎的能力。"},
+  ENFJ:{name:"主人公",role:"富有魅力、鼓舞人心的引领者，能点亮他人的潜能",traits:["善于鼓舞","沟通力强","共情力强","组织力佳"],career:["教育培训","人力资源","公关","团队管理"],advice:"照顾好自己再照亮别人，避免过度付出而耗竭。"},
+  ENFP:{name:"竞选者",role:"热情、富有创造力、善于社交的自由灵魂",traits:["充满热情","创意无限","善于连接","乐观向上"],career:["内容创作","品牌营销","演艺","创业/咨询"],advice:"给天马行空的灵感配上一个可执行的时间表。"},
+  ISTJ:{name:"物流师",role:"务实、专注、讲求事实的可靠之人",traits:["诚实负责","注重细节","条理清晰","踏实可靠"],career:["财务审计","行政管理","工程技术","法律/军警"],advice:"适当拥抱变化，规则之外也有新的可能性。"},
+  ISFJ:{name:"守卫者",role:"非常专注、温暖的守护者，时刻保护所爱之人",traits:["尽职尽责","体贴细致","忠诚稳定","注重传统"],career:["医疗护理","行政管理","教育","社会服务"],advice:"学会表达自己的需求，你的付出也值得被看见。"},
+  ESTJ:{name:"执行者",role:"务实高效、注重秩序的管理型人才，在稳定中收获成就感",traits:["组织力强","果断务实","传统有序","责任心重"],career:["企业管理","行政管理","金融","军警/政务"],advice:"多给非常规的想法和情绪一些包容的空间。"},
+  ESFJ:{name:"领事",role:"热心、爱社交、受欢迎，总是乐于助人的人",traits:["善于合作","温暖体贴","注重和谐","乐于奉献"],career:["医护","教育","人力资源","客户服务"],advice:"别让取悦他人成为负担，你的感受同样重要。"},
+  ISTP:{name:"鉴赏家",role:"大胆而务实的实验家，精通各类工具的使用",traits:["动手能力强","冷静理性","灵活应变","注重实效"],career:["工程技术","软件开发","手工艺","急救/运动"],advice:"把临场应变的才华沉淀为长期规划，会更上一层楼。"},
+  ISFP:{name:"探险家",role:"灵活而富有美感的艺术家，时刻准备着体验新事物",traits:["审美出众","温和敏感","活在当下","自由随性"],career:["设计","摄影","手工艺","园艺/烹饪"],advice:"勇敢把自己的作品和想法展示出来，别总躲在幕后。"},
+  ESTP:{name:"实干家",role:"聪明、精力充沛的行动派，真正的实干达人",traits:["行动迅速","善于应变","现实高效","富有魅力"],career:["销售","创业","演艺","体育/冒险职业"],advice:"冲动是天赋也是风险，重大决策前多停留一秒。"},
+  ESFP:{name:"表演型",role:"热情、爱玩、活泼，享受聚光灯的表演型人才",traits:["活力四射","乐于助人","活在当下","社交达人"],career:["演艺","活动策划","销售","旅游/接待"],advice:"把当下的快乐延伸为长远的规划，会让精彩更持久。"},
+};
+
+/* 为每型补齐丰富解读字段（基于已有 role/traits/career/advice 结构化展开）
+   ——如需自定义某型的深度文案，直接在下方 OVERRIDE 中按类型 key 覆盖即可 */
+const OVERRIDE = {
+  INTJ:{
+    overview:"INTJ 是天生的战略架构师，擅长把复杂问题拆成系统化的长期方案。你习惯独立思考、理性推演，对低效和混乱容忍度极低，总在追求『把事情做对、做好』。",
+    strengths:["卓越的系统思维与长远规划能力","理性果断，面对压力仍能冷静决策","高度自律，能长期专注一个目标","善于发现他人忽略的规律与漏洞"],
+    weaknesses:["容易显得疏离、缺乏耐心倾听情绪","对自己和他人标准过高，显得苛刻","不擅长表达情感，易被误解为冷漠","过度追求完美，偶尔拖延行动"],
+    relation:"你在亲密关系中忠诚而深刻，但不太擅长日常情感表达。伴侣与朋友往往需要你主动给出『我在乎你』的信号；学会适度示弱，关系会更温暖。",
+    growth:["练习把想法先说出来，哪怕还不完美","给重要的人定期表达认可，而不只是默默付出","在追求效率之外，允许自己体验『无意义』的乐趣","把大目标拆成阶段性小胜利，避免长期压抑"]
+  },
+  INFJ:{
+    overview:"INFJ 是温柔而坚定的理想主义者，内心有强烈的价值观和使命感。你善于洞察他人的情绪与需求，渴望用自己的方式让世界变得更好。",
+    strengths:["深刻的共情力与洞察力","坚守原则，有强烈的使命感","善于倾听，是值得信赖的倾诉对象","富有想象力，能看到事情的意义"],
+    weaknesses:["容易过度承担他人的情绪，耗尽自己","对自己要求严苛，常有完美主义倾向","回避冲突，负面情绪习惯向内消化","理想过高，现实落差易带来失落"],
+    relation:"你把关系看得很重，愿意为在乎的人深度付出，但也容易因此受伤。学会设立健康的边界，区分『我能帮』与『我该帮』，是亲密关系的关键。",
+    growth:["学会说『不』，把同理心留一部分给自己","把宏大理想落成每天可执行的小步骤","允许自己表达愤怒与不满，而非默默积压","寻找能理解你内心世界的少数深交"]
+  },
+  ENFP:{
+    overview:"ENFP 是充满感染力的自由灵魂，对世界抱有无限的好奇与热情。你善于连接人与 ideas，总能在平凡中发现可能性，是团队里的灵感与活力担当。",
+    strengths:["热情洋溢，能点燃周围人的积极性","联想力丰富，点子源源不断","共情力强，善于建立真诚的连接","乐观灵活，适应变化的能力出众"],
+    weaknesses:["兴趣广泛但容易三分钟热度","讨厌条条框框，执行与收尾偏弱","情绪易受环境影响，波动较大","承诺过多，导致精力分散"],
+    relation:"你是温暖又有趣的朋友与伴侣，乐于为关系制造惊喜。但要注意：持续的深度陪伴和兑现承诺，比一时的浪漫更能维系长久关系。",
+    growth:["给每个灵感配上截止日期和行动计划","练习专注做完一件事再开启下一件","建立稳定的日常节奏，避免能量大起大落","把『想帮所有人』收敛为『帮到核心』"]
+  },
+  ISTJ:{
+    overview:"ISTJ 是可靠务实的守护者，做事讲究事实、流程和确定性。你踏实、尽责，是团队中让人放心的『定海神针』，相信踏实积累终会开花结果。",
+    strengths:["极强的责任感与可靠性","注重细节，做事一丝不苟","逻辑清晰，善于执行既定流程","冷静稳健，危机中仍可信赖"],
+    weaknesses:["容易固执，对改变和创新的接受度低","情感表达偏少，显得不够亲切","过度关注细节，偶尔忽略大局","对自己要求严苛，容易焦虑"],
+    relation:"你在关系中稳重可靠，会用行动而非言语表达爱。试着偶尔说出感受、给关系一些弹性，会让身边的人感到更被理解。",
+    growth:["有意识地练习表达情感与欣赏","主动接触新方法和不同观点","定期抬头看方向，平衡细节与全局","学会接纳『不完美但已完成』"]
+  },
+};
+
+(function extendTypes(){
+  const base = {
+    strengths: t => t.traits.slice(0,4),
+    weaknesses: t => defaultWeak(t),
+    relation: t => `你天然具备${t.traits[0]}与${t.traits[1]}的特质，在关系中是${t.traits[2]?"值得信赖":"独特"}的存在。了解自己的偏好后，能更好地与他人互补共处。`,
+    overview: t => `${t.name}（${t.role}）。你兼具 ${t.traits.slice(0,3).join("、")} 等特质，在适合自己的领域里往往能发挥出众的能量。`,
+    growth: t => [t.advice, "持续发挥你的核心优势，同时有意识地补足短板，会让性格发展更加完整均衡。"]
+  };
+  function defaultWeak(t){
+    const map = {
+      "追求卓越":"对自己和他人标准偏高","独立思考":"有时显得疏离或不善协作","逻辑严密":"情感表达可能偏少",
+      "热爱分析":"容易陷入过度思考","高果果断":"决策时偶尔忽略他人感受","远见卓识":"落地执行需加强",
+      "机智灵活":"专注力容易分散","创意十足":"需要克制发散","善于辩论":"注意沟通方式","热衷挑战":"避免贪多嚼不烂",
+      "富有同理心":"容易共情疲劳","坚守价值观":"偶尔显得固执","洞察深刻":"可能过度解读","追求意义":"需落地执行",
+      "内心丰富":"情绪起伏需管理","崇尚和平":"回避冲突","忠诚热情":"学会适度保留","理想主义":"面对现实需韧性",
+      "天生鼓舞":"注意倾听","善于沟通":"避免主导对话","共情力强":"边界感需建立","组织力强":"别包揽太多",
+      "充满热情":"需持续聚焦","创意无限":"落地计划","善于连接":"深度沉淀","乐观向上":"正视困难",
+      "诚实负责":"偶尔过于严肃","注重细节":"见树不见林","条理清晰":"灵活性需提升","踏实可靠":"拥抱变化",
+      "尽职尽责":"学会放手","体贴细致":"表达自我","忠诚稳定":"接受不确定性","注重传统":"开放包容",
+      "组织力强":"给团队留空间","果断务实":"兼顾人情","传统有序":"接受非常规","责任心重":"别过度担责",
+      "善于合作":"保持主见","温暖体贴":"先顾自己","注重和谐":"适度表达异议","乐于奉献":"接受回馈",
+      "动手能力强":"沉淀长期规划","冷静理性":"关注情绪","灵活应变":"坚持到底","注重实效":"兼顾创新",
+      "审美出众":"主动展示","温和敏感":"建立边界","活在当下":"延伸长远","自由随性":"适度自律",
+      "行动迅速":"三思后行","善于应变":"坚持承诺","现实高效":"关注人情","富有魅力":"倾听他人",
+      "活力四射":"张弛有度","乐于助人":"量力而行","社交达人":"留独处时间","随机应变":"培养耐心"
+    };
+    return [ map[t.traits[0]]||"偶尔会陷入自己的思维惯性",
+             map[t.traits[1]]||"在某些压力下容易放大短板",
+             map[t.traits[2]]||"需要刻意练习对立功能" ];
+  }
+  for(const k in TYPES){
+    const t = TYPES[k];
+    const o = OVERRIDE[k] || {};
+    t.overview   = o.overview   || base.overview(t);
+    t.strengths  = o.strengths  || base.strengths(t);
+    t.weaknesses = o.weaknesses || base.weaknesses(t);
+    t.relation   = o.relation   || base.relation(t);
+    t.growth     = o.growth     || base.growth(t);
+  }
+})();
+
+/* ============ 状态 ============ */
+let mode = "standard"; // standard(96) | full(200)
+let answers = [];      // ["a"|"b"|null, ...]
+let cur = 0;
+
+/* ============ 路由渲染 ============ */
+const app = document.getElementById("app");
+function render(){
+  const authed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  if(authed.pending){
+    // 等待授权码校验
+    showAuth(authed.pending);
+    return;
+  }
+  if(authed.result){ showResult(authed.result); return; }
+  if(authed.testing){ renderQuiz(); return; }
+  renderHome();
+}
+
+/* ---------- 首页（精简版：入口置顶，说明可折叠，授权码不在首页） ---------- */
+function renderHome(){
+  app.innerHTML = `
+  <div class="brand">
+    <div class="logo">16Personalities</div>
+    <div class="ver">MBTI · v2.0</div>
+  </div>
+
+  <div class="hero">
+    <h1>发现未知又真实的<br>隐藏人格</h1>
+    <p class="sub">MBTI 是全球广泛使用的性格类型指标，通过偏好判断帮你更了解自己</p>
+  </div>
+
+  <!-- 测试入口（置顶） -->
+  <div class="entry-wrap card">
+    <div class="entry">
+      <div class="opt primary" onclick="startTest('standard')">
+        <div class="ill">📝</div>
+        <div class="txt">
+          <div class="tt">标准版</div>
+          <div class="num">96 题</div>
+          <div class="time">约 5–10 分钟 · 快速了解自己</div>
+        </div>
+        <div class="arrow">›</div>
+      </div>
+      <div class="opt full" onclick="startTest('full')">
+        <div class="ill">🧠</div>
+        <div class="txt">
+          <div class="tt">完整版</div>
+          <div class="num">200 题</div>
+          <div class="time">约 10–15 分钟 · 结果更精准</div>
+        </div>
+        <div class="arrow">›</div>
+      </div>
+    </div>
+    <div class="intro-note">进入测试需要有效授权码，每个授权码仅需输入一次，后续直接使用。</div>
+  </div>
+
+  <!-- MBTI 简介：可折叠 -->
+  <details class="collapse card">
+    <summary>什么是 MBTI？<span class="ic">▾</span></summary>
+    <div class="cbody">
+      <p style="font-size:13px;color:var(--muted);line-height:1.7">
+        MBTI（Myers-Briggs Type Indicator）基于荣格的心理类型理论，把性格拆成
+        <b style="color:var(--text)">4 个核心维度</b>，每个维度二选一，组合成 <b style="color:var(--text)">16 种人格类型</b>。
+        它衡量的是「性格偏好与倾向」，而非能力高低。性格类型没有好坏，只有不同。
+      </p>
+      <div class="section-title" style="margin-top:16px">四个核心维度 <span>每题二选一</span></div>
+      <div class="dim-grid">
+        <div class="dim"><div class="top"><span class="dot" style="background:var(--e)"></span>外向 E</div>
+          <p>从与人互动、外部世界中获取能量，乐于表达、行动迅速。</p>
+          <div class="pair">vs 内向 I · 精力来源</div></div>
+        <div class="dim"><div class="top"><span class="dot" style="background:var(--i)"></span>内向 I</div>
+          <p>更专注内心世界，独处恢复精力，深思熟虑、沉浸专注。</p><div class="pair">精力指向</div></div>
+        <div class="dim"><div class="top"><span class="dot" style="background:var(--s)"></span>感觉 S</div>
+          <p>关注具体事实、细节与现实，注重经验和可验证的信息。</p><div class="pair">vs 直觉 N · 认知方式</div></div>
+        <div class="dim"><div class="top"><span class="dot" style="background:var(--n)"></span>直觉 N</div>
+          <p>关注整体、联系与可能性，善于联想、预见未来趋势。</p><div class="pair">信息获取</div></div>
+        <div class="dim"><div class="top"><span class="dot" style="background:var(--t)"></span>思考 T</div>
+          <p>依据逻辑、客观标准做决策，追求公平与因果一致。</p><div class="pair">vs 情感 F · 决策依据</div></div>
+        <div class="dim"><div class="top"><span class="dot" style="background:var(--f)"></span>情感 F</div>
+          <p>考虑人与价值观，重视和谐与共情，决策兼顾感受。</p><div class="pair">判断方式</div></div>
+        <div class="dim"><div class="top"><span class="dot" style="background:var(--j)"></span>判断 J</div>
+          <p>偏好计划、条理与确定性，喜欢把事情早点定下来。</p><div class="pair">vs 知觉 P · 生活方式</div></div>
+        <div class="dim"><div class="top"><span class="dot" style="background:var(--p)"></span>知觉 P</div>
+          <p>保持开放灵活，顺应变化，享受过程中的自由探索。</p><div class="pair">生活态度</div></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 结果分类：可折叠 -->
+  <details class="collapse card">
+    <summary>16 种人格结果分类 <span class="ic">▾</span></summary>
+    <div class="cbody">
+      <div class="type-group">
+        <div class="gh"><span class="dot" style="background:#8b5cf6"></span>分析家 Analysts <span class="tag">NT 型</span></div>
+        <ul><li>INTJ 建筑师 · INTP 逻辑学家</li><li>ENTJ 统帅 · ENTP 辩论家</li><li>理性、战略、擅长逻辑与分析</li></ul>
+      </div>
+      <div class="type-group">
+        <div class="gh"><span class="dot" style="background:#10b981"></span>外交家 Diplomats <span class="tag">NF 型</span></div>
+        <ul><li>INFJ 提倡者 · INFP 调停者</li><li>ENFJ 主人公 · ENFP 竞选者</li><li>共情、理想主义、重视意义与关系</li></ul>
+      </div>
+      <div class="type-group">
+        <div class="gh"><span class="dot" style="background:#3b82f6"></span>守护者 Sentinels <span class="tag">SJ 型</span></div>
+        <ul><li>ISTJ 物流师 · ISFJ 守卫者</li><li>ESTJ 执行者 · ESFJ 领事</li><li>务实、负责、尊重秩序与传统</li></ul>
+      </div>
+      <div class="type-group">
+        <div class="gh"><span class="dot" style="background:#f97316"></span>探险家 Explorers <span class="tag">SP 型</span></div>
+        <ul><li>ISTP 鉴赏家 · ISFP 探险家</li><li>ESTP 实干家 · ESFP 表演型</li><li>灵活、动手能力强、活在当下</li></ul>
+      </div>
+    </div>
+  </details>
+
+  <div class="foot">© MBTI 性格测试 · 仅供自我探索参考 · 非诊断工具</div>
+  `;
+}
+
+/* ---------- 授权码（多码 · 销售 · 次数计数） ---------- */
+const overlay = document.getElementById("authOverlay");
+const USAGE_KEY = "mbti_code_usage_v1"; // 记录每个码已用次数
+
+function getUsage(){ try{return JSON.parse(localStorage.getItem(USAGE_KEY))||{};}catch(e){return{};} }
+function setUsage(u){ localStorage.setItem(USAGE_KEY, JSON.stringify(u)); }
+
+/* 校验授权码：返回 {ok, msg, code}
+   - 码存在 & (allow 匹配本版本 或 "all") & 未超 quota => 通过 */
+function verifyCode(raw, kind){
+  const v = String(raw).trim().toUpperCase();
+  const found = CODES.find(c => c.code === v);
+  if(!found) return {ok:false, msg:"授权码无效，请核对后重试"};
+  if(found.allow !== "all" && found.allow !== kind){
+    return {ok:false, msg: found.allow==="standard" ? "该码仅用于标准版（96题）" : "该码仅用于完整版（200题）" };
+  }
+  if(found.quota != null){
+    const used = (getUsage()[v])||0;
+    if(used >= found.quota) return {ok:false, msg:"该授权码已达使用上限"};
+  }
+  return {ok:true, code:v};
+}
+
+function showAuth(kind){
+  mode = kind;
+  const verTxt = {standard:"标准版 · 96 题", full:"完整版 · 200 题"}[kind];
+  document.getElementById("authDesc").innerHTML =
+    `正在进入 <b>${verTxt}</b><br><span style="font-size:11px;opacity:.75">请输入有效的授权码（每个码仅需输入一次）</span>`;
+  document.getElementById("authErr").textContent = "";
+  document.getElementById("authInput").value = "";
+  overlay.classList.add("show");
+  setTimeout(()=>document.getElementById("authInput").focus(),100);
+}
+function submitAuth(){
+  const res = verifyCode(document.getElementById("authInput").value, mode);
+  if(res.ok){
+    // 计数 +1（不限次数的码也记录，仅作统计）
+    const u = getUsage(); u[res.code] = (u[res.code]||0)+1; setUsage(u);
+    overlay.classList.remove("show");
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({testing:true, mode, code:res.code}));
+    initQuiz();
+  } else {
+    document.getElementById("authErr").textContent = res.msg;
+  }
+}
+document.getElementById("authInput").addEventListener("keydown", e=>{ if(e.key==="Enter") submitAuth(); });
+
+/* ---------- 答题 ---------- */
+function startTest(kind){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({pending:kind}));
+  render();
+}
+function initQuiz(){
+  const len = mode === "full" ? TOTAL : 96;
+  answers = new Array(len).fill(null);
+  cur = 0;
+  renderQuiz();
+}
+function renderQuiz(){
+  const len = answers.length;
+  const q = TEXTS[cur];
+  const pct = Math.round((cur / len) * 100);
+  app.innerHTML = `
+  <div class="card">
+    <div class="quiz-head">
+      <button class="back" onclick="goBack()">‹</button>
+      <div style="flex:1">
+        <div style="font-size:12px;color:var(--muted)">${mode==='full'?'完整版 200 题':'标准版 96 题'}</div>
+        <div class="progress"><div class="bar" style="width:${pct}%"></div></div>
+      </div>
+    </div>
+    <div class="qmeta"><span>第 ${cur+1} / ${len} 题</span><span>${Math.round(pct)}%</span></div>
+    <div class="qtext">${cur+1}. ${q[0]}</div>
+    <button class="opt-btn ${answers[cur]==='a'?'sel':''}" onclick="pick('a')"><span class="key">A</span>${q[1]}</button>
+    <button class="opt-btn ${answers[cur]==='b'?'sel':''}" onclick="pick('b')"><span class="key">B</span>${q[2]}</button>
+    <div class="nav">
+      <button class="btn ghost" style="flex:1" onclick="prev()">‹ 上一题</button>
+      <button class="btn" style="flex:1" onclick="next()">下一题 ›</button>
+    </div>
+  </div>
+  `;
+  window.scrollTo(0,0);
+}
+function pick(choice){
+  answers[cur] = choice;
+  // 选中高亮一下再跳
+  renderQuiz();
+  setTimeout(()=>{ if(answers[cur]===choice && cur < answers.length-1) { cur++; renderQuiz(); } else if(cur === answers.length-1 && answers[cur]!==null){ /* 最后一题选完不自动提交 */ } }, 260);
+}
+function prev(){ if(cur>0){cur--;renderQuiz();} }
+function next(){ if(cur < answers.length-1){cur++;renderQuiz();} else { finish(); } }
+function goBack(){ if(confirm("退出测试将丢失当前进度，确定返回首页吗？")){ localStorage.removeItem(STORAGE_KEY); render(); } }
+
+function finish(){
+  // 检查是否全部作答
+  if(answers.some(a=>a===null)){
+    const idx = answers.findIndex(a=>a===null);
+    alert("还有未作答的题目，请先完成第 " + (idx+1) + " 题");
+    cur = idx; renderQuiz(); return;
+  }
+  const dim = {E:0,I:0,S:0,N:0,T:0,F:0,J:0,P:0};
+  answers.forEach((c,i)=>{ const L = QUESTIONS[i][c]; dim[L]++; });
+  const type =
+    (dim.E >= dim.I ? "E" : "I") +
+    (dim.S >= dim.N ? "S" : "N") +
+    (dim.T >= dim.F ? "T" : "F") +
+    (dim.J >= dim.P ? "J" : "P");
+  const result = {type, dim, mode, time: new Date().toLocaleString("zh-CN")};
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({result}));
+  renderResult(result);
+}
+
+/* ---------- 结果页（丰富解读 + 成长建议 + 海报） ---------- */
+const DNAME = {E:"外向",I:"内向",S:"感觉",N:"直觉",T:"思考",F:"情感",J:"判断",P:"知觉"};
+const DIMCOLOR = {E:"#f59e0b",I:"#6366f1",S:"#10b981",N:"#8b5cf6",T:"#ef4444",F:"#ec4899",J:"#3b82f6",P:"#f97316"};
+
+function renderResult(r){
+  r_type_global = r.type; // 供 savePoster 下载文件名使用
+  const t = TYPES[r.type];
+  const d = r.dim;
+  const pct = (a,b)=> Math.round(d[a]/(d[a]+d[b])*100);
+  const strength = (a,b)=> { const v=pct(a,b); return v>=65?"明显偏好":v>=52?"中等偏好":"接近均衡"; };
+  const bars = [
+    {L:"E 外向", R:"I 内向", a:"E", b:"I", lv:pct("E","I"), rv:pct("I","E"), col:DIMCOLOR.E},
+    {L:"S 感觉", R:"N 直觉", a:"S", b:"N", lv:pct("S","N"), rv:pct("N","S"), col:DIMCOLOR.S},
+    {L:"T 思考", R:"F 情感", a:"T", b:"F", lv:pct("T","F"), rv:pct("F","T"), col:DIMCOLOR.T},
+    {L:"J 判断", R:"P 知觉", a:"J", b:"P", lv:pct("J","P"), rv:pct("P","J"), col:DIMCOLOR.J},
+  ];
+  const letters = r.type.split("").map(x=>DNAME[x]);
+  const dimsHtml = bars.map(b=>`
+      <div class="row">
+        <div class="lab"><span>${b.L} <b>${b.lv}%</b></span><span><b>${b.rv}%</b> ${b.R}</span></div>
+        <div class="track">
+          <div class="seg a" style="flex:${b.lv};background:${b.col}">${b.lv>8?b.L.split(" ")[0]:""}</div>
+          <div class="seg b" style="flex:${b.rv}">${b.rv>8?b.R.split(" ")[0]:""}</div>
+        </div>
+      </div>`).join("");
+
+  // 四个维度的偏好描述（结合本人得分）
+  const dimDesc = {
+    EI: r.type[0]==="E"
+      ? `你在 <b>E 外向（${pct("E","I")}%）</b> 上得分较高，善于从人际互动、外部世界中汲取能量，表达和行动更外放。`
+      : `你在 <b>I 内向（${pct("I","E")}%）</b> 上得分较高，更习惯向内 recharge，享受独处与深度思考。`,
+    SN: r.type[1]==="S"
+      ? `在认知方式上偏 <b>S 感觉（${pct("S","N")}%）</b>，你更看重具体事实、细节和可验证的经验。`
+      : `在认知方式上偏 <b>N 直觉（${pct("N","S")}%）</b>，你更关注整体联系、可能性与长远趋势。`,
+    TF: r.type[2]==="T"
+      ? `决策时偏 <b>T 思考（${pct("T","F")}%）</b>，习惯用逻辑、客观标准权衡利弊。`
+      : `决策时偏 <b>F 情感（${pct("F","T")}%）</b>，会更自然地把人和价值观纳入考量。`,
+    JP: r.type[3]==="J"
+      ? `生活方式偏 <b>J 判断（${pct("J","P")}%）</b>，喜欢计划、条理和确定性，倾向把事尽早定下来。`
+      : `生活方式偏 <b>P 知觉（${pct("P","J")}%）</b>，更愿意保持开放、灵活应变，享受过程。`,
+  };
+
+  app.innerHTML = `
+  <div class="card">
+    <div class="result-type">
+      <div class="code">${r.type}</div>
+      <div class="name">${t.name}</div>
+      <div class="role">${t.role}</div>
+      <div class="chip-wrap" style="justify-content:center;margin-top:12px">
+        ${r.type.split("").map((x,i)=>`<span class="chip" style="border-color:${DIMCOLOR[x]}">${x} · ${letters[i]}</span>`).join("")}
+      </div>
+    </div>
+
+    <!-- 分享海报（先渲染，含保存按钮） -->
+    <div id="posterRoot">${posterHtml(r, t, bars)}</div>
+    <div class="share-row">
+      <button class="btn ghost" onclick="restart()">再测一次</button>
+      <button class="btn primary" onclick="savePoster()">📸 保存分享海报</button>
+    </div>
+
+    <div class="bars-title">四个维度分值</div>
+    <div class="bars">${dimsHtml}</div>
+    <div class="info-block">
+      <h4>📊 偏好强弱解读</h4>
+      <ul>
+        ${bars.map(b=>`<li><b style="color:${b.col}">${b.L.split(" ")[0]}/${b.R.split(" ")[0]}</b>：${strength(b.a,b.b)}（${pct(b.a,b.b)}% / ${pct(b.b,b.a)}%）</li>`).join("")}
+      </ul>
+      <p style="margin-top:8px;font-size:12px;opacity:.85">${dimDesc.EI}${dimDesc.SN}${dimDesc.TF}${dimDesc.JP}</p>
+    </div>
+
+    <div class="info-block">
+      <h4>🧭 类型整体解读</h4>
+      <p>${t.overview}</p>
+    </div>
+
+    <div class="info-block">
+      <h4>✨ 核心特质</h4>
+      <div class="chip-wrap">${t.traits.map(x=>`<span class="chip">${x}</span>`).join("")}</div>
+    </div>
+
+    <div class="grid2">
+      <div class="info-block">
+        <h4>💪 天然优势</h4>
+        <ul>${t.strengths.map(x=>`<li>${x}</li>`).join("")}</ul>
+      </div>
+      <div class="info-block">
+        <h4>⚠️ 潜在短板</h4>
+        <ul>${t.weaknesses.map(x=>`<li>${x}</li>`).join("")}</ul>
+      </div>
+    </div>
+
+    <div class="info-block">
+      <h4>👥 人际与沟通</h4>
+      <p>${t.relation}</p>
+    </div>
+
+    <div class="info-block">
+      <h4>💼 适合职业方向</h4>
+      <ul>${t.career.map(x=>`<li>${x}</li>`).join("")}</ul>
+    </div>
+
+    <div class="info-block grow">
+      <h4>🌱 成长建议</h4>
+      ${t.growth.map(x=>`<p style="margin-bottom:8px">${x}</p>`).join("")}
+    </div>
+
+    <div class="share-row">
+      <button class="btn ghost" onclick="restart()">再测一次</button>
+      <button class="btn primary" onclick="window.scrollTo({top:0,behavior:'smooth'});savePoster();">📸 保存海报</button>
+    </div>
+    <div class="foot">完成于 ${r.time} · ${r.mode==='full'?'完整版 200 题':'标准版 96 题'}<br>性格类型没有好坏，只有不同 · 结果仅供参考</div>
+  </div>
+  `;
+  window.scrollTo(0,0);
+}
+
+/* 生成海报 HTML（独立于页面，便于整张截图保存） */
+function posterHtml(r, t, bars){
+  const verTxt = r.mode==='full'?'完整版 · 200题':'标准版 · 96题';
+  return `
+  <div class="poster" id="poster">
+    <div class="plogo">16Personalities · MBTI</div>
+    <div class="pcode">${r.type}</div>
+    <div class="pname">${t.name} · ${t.role}</div>
+    <div class="prole">${r.type.split("").map(x=>DNAME[x]).join(" · ")}</div>
+    <div class="pdim">
+      ${r.type.split("").map(x=>`<span style="border:1px solid rgba(255,255,255,.3)">${x} ${DNAME[x]}</span>`).join("")}
+    </div>
+    <div class="pbars">
+      ${bars.map(b=>`
+        <div class="pbar">
+          <span class="pl">${b.a}</span>
+          <span class="pt"><i style="width:${b.lv}%;background:${b.col}"></i></span>
+          <span class="pr">${b.b} ${b.lv}/${b.rv}</span>
+        </div>`).join("")}
+    </div>
+    <div class="pfoot">四维偏好 · ${verTxt} · ${new Date().toLocaleDateString("zh-CN")}<br>性格类型没有好坏，只有不同</div>
+  </div>`;
+}
+
+/* 保存海报：把海报节点绘制成图片并下载 */
+function savePoster(){
+  const node = document.getElementById("poster");
+  if(!node){ alert("海报尚未生成"); return; }
+  // 优先使用 SVG foreignObject 方案（无需第三方库）
+  const w = node.offsetWidth, h = node.offsetHeight;
+  const xml = new XMLSerializer().serializeToString(node);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+    <foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">${node.outerHTML}</div></foreignObject>
+  </svg>`;
+  const img = new Image();
+  const svgBlob = new Blob([svg], {type:"image/svg+xml;charset=utf-8"});
+  const url = URL.createObjectURL(svgBlob);
+  img.onload = ()=>{
+    const canvas = document.createElement("canvas");
+    const dpr = window.devicePixelRatio||1;
+    canvas.width = w*dpr; canvas.height = h*dpr;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr,dpr);
+    ctx.drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(url);
+    canvas.toBlob(blob=>{
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `MBTI_${r_type_global}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    }, "image/png");
+  };
+  img.onerror = ()=>{ URL.revokeObjectURL(url); alert("海报生成失败，可直接对上方海报卡片截图分享 📸"); };
+  img.src = url;
+}
+let r_type_global = "";
+function restart(){ localStorage.removeItem(STORAGE_KEY); render(); }
+function showResult(r){ renderResult(r); }
+
+render();
+</script>
+</body>
+</html>
